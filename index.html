@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Space Explorer</title>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script type="text/javascript" src="lib/gl-matrix.min.js"></script>
+	<script type="text/javascript" src="oo.js"></script>
+	<script type="text/javascript" src="global.js"></script>
+	<script type="text/javascript" src="assets.js"></script>
+	<script type="text/javascript" src="geometry.js"></script>
+	<script type="text/javascript" src="gameobject.js"></script>
+	<script type="text/javascript" src="planet.js"></script>
+	<script type="text/javascript" src="sun.js"></script>
+	<script type="text/javascript" src="system.js"></script>
+	<script type="text/javascript" src="map.js"></script>
+	<script type="text/javascript" src="explorer.js"></script>
+	<script type="text/javascript" src="app.js"></script>
+	<style>
+	* { margin:0; padding:0; }
+	</style>
+</head>
+<body>
+	<canvas id="canvas" tabindex="1">
+		If you see this it wont work.
+	</canvas>
+	<script type="text/javascript">
+		var app = new SPACEX.App(document.getElementById("canvas"), window.innerWidth - 20, window.innerHeight - 20);
+		app.init();
+		app.start();
+
+		SPACEX.app = app;
+	</script>
+</body>
+</html>
