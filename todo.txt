@@ -1,19 +1,13 @@
-% of habitable vs rocky vs gas giant planets
-different size for gas giants
 
 % of habitable planets with life
-% of habitable planets with life with station
 
 moons
 
 enemies randomly appear in systems
 
 ship has weapon slots
- - tracking speed
- - rand
  - damage type?
  - different weapons
- - when firing draw beam from region of ship based on slot
 
 weapons auto fire at nearby enemies when weapons armed
 

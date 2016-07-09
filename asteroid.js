@@ -1,27 +1,30 @@
-SPACEX.Sun = function(x, y, r) {
+SPACEX = SPACEX || {};
+
+SPACEX.Asteroid = function(x, y, sun) {
+
   SPACEX.GameObject.call(this, {
-    type: "sun",
+    type: "asteroid",
     x: x,
     y: y,
-    width: r * 2,
-    height: r * 2,
-    r: r
+    width: ASTEROID_RADIUS * 2,
+    height: ASTEROID_RADIUS * 2,
+    r: ASTEROID_RADIUS
   });
 
-  this.discovered = false;
-  this.name = makeid();
-  this.img = SPACEX.Assets.getRandomSunImage();
+  this.sun = sun;
+  this.img = SPACEX.Assets.getRandomAsteroidImage();
 
   this.hover = false;
   this.selected = false;
+
+  this.name = "asteroid";
 };
 
-SPACEX.Sun.extends(SPACEX.GameObject);
+SPACEX.Asteroid.extends(SPACEX.GameObject);
 
-SPACEX.Sun.prototype.drawImpl = function() {
+SPACEX.Asteroid.prototype.drawImpl = function() {
 
-  var zoomAdjust = Math.min(1/SPACEX.app.zoom, 5);
-
+  //Image
   ctx.translate(this.x - this.r, this.y - this.r);
   ctx.drawImage(this.img, 0, 0, this.r * 2, this.r * 2);
   ctx.translate(-(this.x - this.r), -(this.y - this.r));
@@ -39,6 +42,6 @@ SPACEX.Sun.prototype.drawImpl = function() {
   }
 };
 
-SPACEX.Sun.prototype.mouseClickImpl = function(x, y) {
+SPACEX.Asteroid.prototype.mouseClickImpl = function(x, y) {
   SPACEX.selectedBody = this;
 };

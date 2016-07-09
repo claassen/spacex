@@ -53,8 +53,8 @@ SPACEX.System = function(arm) {
   }
 
   var rotatedPosition = rotate_point(0, 0, angleAdjust, x, y);
-  var sunX = rotatedPosition.x;
-  var sunY = rotatedPosition.y;
+  var sunX = rotatedPosition.x | 0;
+  var sunY = rotatedPosition.y | 0;
 
   var sunRadius = Math.random() * SUN_RADIUS / 2 + SUN_RADIUS / 2;
 
@@ -63,10 +63,9 @@ SPACEX.System = function(arm) {
     x: sunX,
     y: sunY,
     width: SYSTEM_RADIUS * 2,
-    height: SYSTEM_RADIUS * 2
+    height: SYSTEM_RADIUS * 2,
+    r: SYSTEM_RADIUS
   });
-
-  this.r = SYSTEM_RADIUS;
 
   this.sun = new SPACEX.Sun(sunX, sunY, sunRadius);
 
@@ -77,13 +76,37 @@ SPACEX.System = function(arm) {
   var numPlanets = randInRange(MIN_NUM_PLANETS, MAX_NUM_PLANETS);
 
   for(var i = 0; i < numPlanets; i++) {
-    //TODO: Prevent plants too close to sun and overlapping orbits
-    var planetX = sunX + Math.random() * SYSTEM_RADIUS - SYSTEM_RADIUS / 2;
-    var planetY = sunY + Math.random() * SYSTEM_RADIUS - SYSTEM_RADIUS / 2;
+    var orbitRadius = randInRange(SUN_RADIUS * 2, SYSTEM_RADIUS);
+    var angle = randInRange(0, Math.PI * 2);
 
-    var planet = new SPACEX.Planet(planetX, planetY, sunX, sunY);
+    var position = Geometry.getPositionAtAngle(sunX, sunY, orbitRadius, angle);
+
+    var planetX = position.x;
+    var planetY = position.y;
+
+    var planet = new SPACEX.Planet(planetX, planetY, this.sun);
     this.planets.push(planet);
     this.addChildObject(planet);
+  }
+
+  var hasAsteroidBelt = selectValueWithProbability(
+    [true, false],
+    [PERCENT_ASTEROID_BELTS, 100 - PERCENT_ASTEROID_BELTS]
+  );
+
+  this.asteroids = [];
+
+  if(hasAsteroidBelt) {
+    this.hasAsteroidBelt = true;
+    var beltRadius = randInRange(SYSTEM_RADIUS * 0.25, SYSTEM_RADIUS * 0.75);
+    this.asteroidBeltRadius = beltRadius;
+    for(var i = 0; i < NUM_ASTEROIDS; i++) {
+      var angle = randInRange(0, Math.PI * 2);
+      var position = Geometry.getPositionAtAngle(this.sun.x, this.sun.y, randInRange(beltRadius * 0.99, beltRadius * 1.01), angle);
+      var asteroid = new SPACEX.Asteroid(position.x, position.y, this.sun);
+      this.asteroids.push(asteroid);
+      this.addChildObject(asteroid);
+    }
   }
 
   this.name = makeid();
@@ -107,6 +130,7 @@ SPACEX.System.prototype.draw = function(mat) {
 
     ctx.scale(1/SPACEX.app.zoom, 1/SPACEX.app.zoom);
     ctx.stroke();
+    ctx.closePath();
     ctx.scale(SPACEX.app.zoom, SPACEX.app.zoom);
 
     ctx.translate(-this.x, -this.y);
@@ -115,18 +139,31 @@ SPACEX.System.prototype.draw = function(mat) {
       var zoomAdjust2 = Math.min(1/SPACEX.app.zoom, 5000);
       //Name
       ctx.translate(this.x, this.y);
-      ctx.rotate(-SPACEX.explorer.angle);
+      ctx.rotate(-SPACEX.player.ship.angle);
       ctx.scale(zoomAdjust2, zoomAdjust2);
       ctx.fillStyle = "green";
       ctx.font = "20px Arial";
       ctx.fillText(this.name, 0, -(this.r + 20) * 1 / zoomAdjust2);
       ctx.scale(1 / zoomAdjust2, 1 / zoomAdjust2);
-      ctx.rotate(SPACEX.explorer.angle);
+      ctx.rotate(SPACEX.player.ship.angle);
       ctx.translate(-(this.x), -(this.y));
     }
   }
 
   if(SPACEX.app.zoom > MAP_ZOOM_LIMIT) {
+    if(this.hasAsteroidBelt) {
+      ctx.translate(this.x, this.y);
+      ctx.beginPath();
+      ctx.strokeStyle = "brown";
+      ctx.lineWidth = 1;
+      ctx.arc(0, 0, this.asteroidBeltRadius, 0, Math.PI * 2);
+      ctx.scale(1/SPACEX.app.zoom, 1/SPACEX.app.zoom);
+      ctx.stroke();
+      ctx.closePath();
+      ctx.scale(SPACEX.app.zoom, SPACEX.app.zoom);
+      ctx.translate(-this.x, -this.y);
+    }
+
     SPACEX.GameObject.prototype.draw.call(this, mat);
   }
 };

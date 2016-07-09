@@ -34,11 +34,6 @@ SPACEX.App = function($canvas, screenWidth, screenHeight) {
 
 	var self = this;
 
-	var rotate = function(rads) {
-		self.rotation += rads;
-		SPACEX.map.rotation += rads;
-	};
-
 	var zoom = function(delta) {
 		if(self.zoom * delta < MIN_ZOOM_LIMIT || self.zoom * delta > MAX_ZOOM_LIMIT) {
 			return;
@@ -87,26 +82,28 @@ SPACEX.App = function($canvas, screenWidth, screenHeight) {
 		//D
 		if(charCode == 100) {
 			//rotate(-0.05);
-			SPACEX.explorer.rotate(-1);
+			SPACEX.player.ship.rotate(-1);
 		}
 		//A
 		else if(charCode == 97) {
 			//rotate(0.05);
-			SPACEX.explorer.rotate(1);
+			SPACEX.player.ship.rotate(1);
 		}
 		//W
 		else if(charCode == 119) {
-			SPACEX.explorer.thrust(1);
+			SPACEX.player.ship.thrust(1);
 		}
 		//S
 		else if(charCode == 115) {
-			SPACEX.explorer.thrust(-1);
+			SPACEX.player.ship.thrust(-1);
 		}
 		//Space
 		else if(charCode == 32) {
-			SPACEX.explorer.stop();
+			SPACEX.player.ship.stop();
 		}
 	};
+
+	SPACEX.app = this;
 };
 
 SPACEX.App.extends(SPACEX.GameObject);
@@ -126,32 +123,44 @@ SPACEX.App.prototype.init = function() {
 			this.addChildObject(SPACEX.systems[i]);
 	}
 
-	SPACEX.map = new SPACEX.Map(0, 0, 0.0125, this.width / 3, this.height / 3, this.width, this.height);
+	SPACEX.player = new SPACEX.Player();
 
-	for(var i = 0; i < SPACEX.systems.length; i++) {
-			SPACEX.map.addChildObject(SPACEX.systems[i]);
+	this.addChildObject(SPACEX.player);
+
+	SPACEX.hud = new SPACEX.Hud();
+
+	this.addChildObject(SPACEX.hud);
+
+	for(var i = 0; i < 50; i++) {
+		var type = selectValueWithProbability(
+	    ["advanced", "advanced2", "explorer", "hostile", "industrial", "industrial2", "industrial3", "junky", "purple_alien", "unique_alien"],
+	    [10, 10000, 10, 10, 10, 10, 10, 10, 10, 10]
+	  );
+
+		var x = randInRange(-2000, 2000);
+		var y = randInRange(-2000, 2000);
+
+		var ship = SPACEX.ShipHelper.getRandomShip(type);
+		ship.x = x;
+		ship.y = y;
+
+		this.addChildObject(ship);
 	}
-
-	//this.addChildObject(SPACEX.map);
-
-	SPACEX.explorer = new SPACEX.Explorer();
-
-	this.addChildObject(SPACEX.explorer);
 };
 
 SPACEX.App.prototype.start = function() {
 	var self = this;
 
 	var intro = true;
-	self.zoom = INTRO_ZOOM_START;
+	self.zoom = INTRO_ZOOM_END;
 
 	var mainLoop = function() {
-		if(intro) {
-			self.zoom *= 1.02;
-			if(self.zoom >= INTRO_ZOOM_END) {
-				intro = false;
-			}
-		}
+		// if(intro) {
+		// 	self.zoom *= 1.04;
+		// 	if(self.zoom >= INTRO_ZOOM_END) {
+		// 		intro = false;
+		// 	}
+		// }
 
 		self.update();
 		self.draw();
@@ -162,9 +171,9 @@ SPACEX.App.prototype.start = function() {
 };
 
 SPACEX.App.prototype.update = function() {
-	this.rotation = SPACEX.explorer.angle;
-	this.offsetX = -SPACEX.explorer.x + this.width / 2 / this.zoom;
-	this.offsetY = -SPACEX.explorer.y + this.height / 2 / this.zoom;
+	this.rotation = SPACEX.player.ship.angle;
+	this.offsetX = 0 + this.width / 2 / this.zoom;
+	this.offsetY = 0 + this.height / 2 / this.zoom;
 
 	SPACEX.GameObject.prototype.update.call(this);
 };

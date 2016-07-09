@@ -21,6 +21,7 @@ SPACEX.GameObject = function(options) {
 	this.y = options.y;
 	this.width = options.width;
 	this.height = options.height;
+	this.r = options.r || this.width / 2;
 	this.offsetX = options.offsetX;
 	this.offsetY = options.offsetY;
 	this.rotation = options.rotation;
@@ -56,8 +57,16 @@ SPACEX.GameObject.prototype.mouseClick = function (x, y) {
 
 	for(var i = 0; i < this.childObjects.length; i++) {
 		var childObject = this.childObjects[i];
-		if(Geometry.isCollision(childObject, mouseWorldCoords)) {
-			childObject.mouseClick(x, y);
+
+		if(childObject.isFixedPosition) {
+			if(Geometry.isCollision(childObject, {x: x, y: y})) {
+				childObject.mouseClick(x, y);
+			}
+		}
+		else {
+			if(Geometry.isCollision(childObject, mouseWorldCoords)) {
+				childObject.mouseClick(x, y);
+			}
 		}
 	}
 };
@@ -101,6 +110,19 @@ SPACEX.GameObject.prototype.keyPressed = function(e) {
 SPACEX.GameObject.prototype.update = function() {
 	for(var i = 0; i < this.childObjects.length; i++) {
 		this.childObjects[i].update();
+	}
+};
+
+SPACEX.GameObject.prototype.translate = function(deltaX, deltaY) {
+	if(!this.isFixedPosition && this.type != "player") {
+		this.x += deltaX;
+		this.y += deltaY;
+	}
+
+	if(this.type != "player") {
+		for(var i = 0; i < this.childObjects.length; i++) {
+			this.childObjects[i].translate(deltaX, deltaY);
+		}
 	}
 };
 
@@ -149,6 +171,7 @@ SPACEX.GameObject.prototype.draw = function(mat) {
 	if(this.isClipped) {
 		ctx.beginPath();
 		ctx.rect(this.x, this.y, this.width, this.height);
+		ctx.closePath();
 		ctx.clip();
 	}
 
@@ -179,14 +202,7 @@ SPACEX.GameObject.prototype.draw = function(mat) {
 	ctx.translate(this.offsetX, this.offsetY);
 	mat2d.translate(this.mat, this.mat, [this.offsetX, this.offsetY]);
 
-	ctx.setTransform(this.mat[0], this.mat[1], this.mat[2], this.mat[3], this.mat[4], this.mat[5]);
-
 	mat2d.invert(this.matInv, this.mat);
-
-	//if(this.name == "system" && SPACEX.app.zoom < MAP_ZOOM_LIMIT) {
-	//	ctx.restore();
-	//	return;
-	//}
 
 	var worldBoundingRectangle = this.getWorldBoundingRectangle();
 
@@ -204,4 +220,8 @@ SPACEX.GameObject.prototype.draw = function(mat) {
 	}
 
 	ctx.restore();
+};
+
+SPACEX.GameObject.prototype.takeDamage = function(damage) {
+
 };
