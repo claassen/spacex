@@ -29,11 +29,12 @@ SPACEX.Player = function() {
 
 SPACEX.Player.extends(SPACEX.GameObject);
 
+var predictedPathPositionsCache = [];
+var previousPredictedPathZoom = null;
+var predictedCacheRefeshTimer = 0;
+
 SPACEX.Player.prototype.drawImpl = function() {
   //Projected path
-  var baseX = 0;
-  var baseY = 0;
-
   var x = this.ship.x;
   var y = this.ship.x;
   var vx = this.ship.vx;
@@ -44,44 +45,73 @@ SPACEX.Player.prototype.drawImpl = function() {
   ctx.setLineDash([Math.max(1, 10 * SPACEX.app.zoom), Math.max(2, 20 * SPACEX.app.zoom)]);
   ctx.moveTo(this.ship.x, this.ship.y);
 
-  var sun = this.ship.currentSystem.sun;
+  var system = this.ship.currentSystem;
 
-  for(var i = 0; i < 10000; i++) {
-    var d = Math.max(Geometry.distance(x, y, sun.x, sun.y), sun.r);
-    var f = gravity(SHIP_MASS, SUN_MASS, d);
+  predictedCacheRefeshTimer++;
 
-    var theta = Math.atan2(y - sun.y, x - sun.x);
-    var fx = Math.cos(theta) * f;
-    var fy = Math.sin(theta) * f;
+  if(predictedCacheRefeshTimer > 100 || predictedPathPositionsCache.length == 0 || previousPredictedPathZoom != SPACEX.app.zoom || this.ship.ax !=0 || this.ship.ay != 0) {
+    predictedPathPositionsCache = [];
 
-    var dx1 = fx / SHIP_MASS;
-    var dy1 = fy / SHIP_MASS;
+    for(var i = 0; i < Math.min(50000 / (SPACEX.app.zoom * 50), 20000); i++) {
+      //Periodically check if the path went into another system
+      if(i % 100 == 0) {
+        for(var s = 0; s < SPACEX.systems.length; s++) {
+          if(Geometry.isCollision(SPACEX.systems[s], { x: x, y: y })) {
+            system = SPACEX.systems[s];
+          }
+        }
+      }
 
-    vx += dx1;
-    vy += dy1;
+      if(system) {
+        var sun = system.sun;
 
-    for(var j = 0; j < this.ship.currentSystem.planets.length; j++) {
-      var planet = this.ship.currentSystem.planets[j];
+        var d = Math.max(Geometry.distance(x, y, sun.x, sun.y), sun.r);
+        var f = gravity(SHIP_MASS, SUN_MASS, d);
 
-      var d = Math.max(Geometry.distance(x, y, planet.x, planet.y), planet.r);
-      var f = gravity(SHIP_MASS, PLANET_MASS, d);
+        var theta = Math.atan2(y - sun.y, x - sun.x);
+        var fx = Math.cos(theta) * f;
+        var fy = Math.sin(theta) * f;
 
-      var theta = Math.atan2(y - planet.y, x - planet.x);
-      var fx = Math.cos(theta) * f;
-  		var fy = Math.sin(theta) * f;
+        var dx1 = fx / SHIP_MASS;
+        var dy1 = fy / SHIP_MASS;
 
-      var dx1 = fx / SHIP_MASS;
-  		var dy1 = fy / SHIP_MASS;
+        vx += dx1;
+        vy += dy1;
 
-      vx += dx1;
-  		vy += dy1;
+        for(var j = 0; j < system.planets.length; j++) {
+          var planet = system.planets[j];
+
+          var d = Math.max(Geometry.distance(x, y, planet.x, planet.y), planet.r);
+          var f = gravity(SHIP_MASS, PLANET_MASS, d);
+
+          var theta = Math.atan2(y - planet.y, x - planet.x);
+          var fx = Math.cos(theta) * f;
+      		var fy = Math.sin(theta) * f;
+
+          var dx1 = fx / SHIP_MASS;
+      		var dy1 = fy / SHIP_MASS;
+
+          vx += dx1;
+      		vy += dy1;
+        }
+      }
+
+      x -= vx;
+      y -= vy;
+
+      predictedPathPositionsCache.push({x: x, y: y});
     }
-
-    x -= vx;
-    y -= vy;
-
-    ctx.lineTo(x, y);
   }
+
+  if(predictedCacheRefeshTimer > 100) {
+    predictedCacheRefeshTimer = 0;
+  }
+
+  for(var i = 0; i < predictedPathPositionsCache.length; i++) {
+    var position = predictedPathPositionsCache[i];
+    ctx.lineTo(position.x, position.y);
+  }
+
   ctx.scale(1/SPACEX.app.zoom, 1/SPACEX.app.zoom);
   ctx.stroke();
   ctx.scale(SPACEX.app.zoom, SPACEX.app.zoom);

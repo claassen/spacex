@@ -13,9 +13,8 @@ function isUndefined(x) {
 }
 
 function interceptOnCircle(p1, p2, c, r) {
-
-    var p3 = {x:p1.x - c.x, y:p1.y - c.y}; //shifted line points
-    var p4 = {x:p2.x - c.x, y:p2.y - c.y};
+    var p3 = {x: p1.x - c.x, y: p1.y - c.y}; //shifted line points
+    var p4 = {x: p2.x - c.x, y: p2.y - c.y};
 
     var m = (p4.y - p3.y) / (p4.x - p3.x); //slope of the line
     var b = p3.y - m * p3.x; //y-intercept of line
@@ -35,43 +34,13 @@ function interceptOnCircle(p1, p2, c, r) {
 }
 
 Geometry.doesLineIntersectCircle = function(ax, ay, bx, by, cx, cy, r) {
-	var int = interceptOnCircle({x: ax, y: ay}, {x: bx, y:by}, {x: cx, y: cy}, r);
+	var interceptPoints = interceptOnCircle({x: ax, y: ay}, {x: bx, y:by}, {x: cx, y: cy}, r);
 
-	if(int === false) {
+	if(interceptPoints === false) {
 		return false;
 	}
 
 	return true;
-
-	var dx = bx - ax;
-	var dy = by - ay;
-	var fx = ax - cx;
-	var fy = ay - cy;
-
-	// ax -= cx;
-	// ay -= cy;
-	// bx -= cx;
-	// by -= cy;
-
-	var a = dx * dx + dy * dy; //ax * ax + ay * ay - r * r;
-	var b = 2 * dx * fx + dy * fy; //(ax * (bx - ax) + ay * (by - ay));
-	var c = fx * fx + fy * fy - r * r; //(bx - ax) * (bx - ax) + (by - ay) * (by - ay);
-	var disc = b * b - 4 * a * c;
-
-	if(disc <= 0) {
-		return false;
-	}
-
-	var sqrtDisc = Math.sqrt(disc);
-
-	var t1 = (-b + sqrtDisc) / (2 * a);
-	var t2 = (-b - sqrtDisc) / (2 * a);
-
-	if(0 < t1 && t1 < 1 && 0 < t2 && t2 < 2) {
-		return true;
-	}
-
-	return false;
 }
 
 function doPolygonsIntersect (a, b) {
@@ -79,7 +48,6 @@ function doPolygonsIntersect (a, b) {
     var minA, maxA, projected, i, i1, j, minB, maxB;
 
     for (i = 0; i < polygons.length; i++) {
-
         // for each polygon, look at each edge of the polygon, and determine if it separates
         // the two shapes
         var polygon = polygons[i];
@@ -122,7 +90,6 @@ function doPolygonsIntersect (a, b) {
             // if there is no overlap between the projects, the edge we are looking at separates the two
             // polygons, and we know there is no overlap
             if (maxA < minB || maxB < minA) {
-                //CONSOLE("polygons don't intersect!");
                 return false;
             }
         }
