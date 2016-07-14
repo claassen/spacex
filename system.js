@@ -112,10 +112,13 @@ SPACEX.System = function(arm) {
   this.name = makeid();
 
   this.hover = false;
-  this.selected = false;
+  // this.selected = false;
 };
 
 SPACEX.System.extends(SPACEX.GameObject);
+
+SPACEX.System.prototype.update = function() {
+};
 
 SPACEX.System.prototype.draw = function(mat) {
 
@@ -124,7 +127,7 @@ SPACEX.System.prototype.draw = function(mat) {
   if(SPACEX.app.zoom < SYSTEM_ZOOM_LIMIT) {
     ctx.translate(this.x, this.y);
     ctx.beginPath();
-    ctx.strokeStyle = (this.hover || this.selected) ? "blue" : "gray";
+    ctx.strokeStyle = (this.hover || SPACEX.app.selectedObject == this || this.isInActivationRange) ? "blue" : "gray";
     ctx.lineWidth = 1;
     ctx.arc(0, 0, SYSTEM_RADIUS, 0, Math.PI * 2);
 
@@ -135,7 +138,7 @@ SPACEX.System.prototype.draw = function(mat) {
 
     ctx.translate(-this.x, -this.y);
 
-    if(SPACEX.app.zoom > 0.0001) {
+    if(SPACEX.app.zoom > MIN_DRAW_SUN_ZOOM) {
       var zoomAdjust2 = Math.min(1/SPACEX.app.zoom, 5000);
       //Name
       ctx.translate(this.x, this.y);
@@ -150,7 +153,11 @@ SPACEX.System.prototype.draw = function(mat) {
     }
   }
 
-  if(SPACEX.app.zoom > MAP_ZOOM_LIMIT) {
+  if(SPACEX.app.zoom > MIN_DRAW_SUN_ZOOM) {
+    this.sun.drawImpl();
+  }
+
+  if(SPACEX.app.zoom > MIN_DRAW_SYSTEM_ZOOM) {
     if(this.hasAsteroidBelt) {
       ctx.translate(this.x, this.y);
       ctx.beginPath();
@@ -176,8 +183,7 @@ SPACEX.System.prototype.mouseMoveImpl = function(x, y) {
 };
 
 SPACEX.System.prototype.mouseClickImpl = function(x, y) {
-  SPACEX.selectedSystem = this;
-  //SPACEX.GameObject.prototype.mouseClick.call(this, x, y);
+  SPACEX.app.selectedObject = this;
 };
 
 SPACEX.System.prototype.getWorldBoundingRectangle = function() {

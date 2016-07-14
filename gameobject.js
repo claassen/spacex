@@ -50,7 +50,6 @@ SPACEX.GameObject.prototype.mouseUp = function (x, y) {
 SPACEX.GameObject.prototype.mouseClick = function (x, y) {
 	this.unselectAll();
 
-	this.selected = true;
 	this.mouseClickImpl();
 
 	var mouseWorldCoords = this.screenToWorldCoords(x, y);
@@ -75,7 +74,8 @@ SPACEX.GameObject.prototype.mouseClickImpl = function (x, y) {
 };
 
 SPACEX.GameObject.prototype.unselectAll = function() {
-	this.selected = false;
+	// this.selected = false;
+	SPACEX.app.selectedObject = null;
 
 	for(var i = 0; i < this.childObjects.length; i++) {
 		this.childObjects[i].unselectAll();
@@ -105,6 +105,12 @@ SPACEX.GameObject.prototype.mouseScroll = function(e) {
 };
 
 SPACEX.GameObject.prototype.keyPressed = function(e) {
+};
+
+SPACEX.GameObject.prototype.keyDown = function(e) {
+};
+
+SPACEX.GameObject.prototype.keyUp = function(e) {
 };
 
 SPACEX.GameObject.prototype.update = function() {

@@ -44,7 +44,8 @@ var MIN_NUM_PLANETS = 2;
 var MAX_NUM_PLANETS = 6;
 
 var SYSTEM_ZOOM_LIMIT = 0.05;
-var MAP_ZOOM_LIMIT = 0.000125;
+var MIN_DRAW_SYSTEM_ZOOM = 0.00125;
+var MIN_DRAW_SUN_ZOOM = 0.0001;
 
 var INTRO_ZOOM_START = 0.000005;
 var INTRO_ZOOM_END = 1;
@@ -60,6 +61,19 @@ var PERCENT_STATIONS = 100; //50;
 var PERCENT_ASTEROID_BELTS = 50;
 var NUM_ASTEROIDS = 300;
 var ASTEROID_RADIUS = 200;
+
+var PLANET_ACTIVATION_ZONE_RADIUS_OFFSET = 300;
+var STATION_ACTIVATION_ZONE_RADIUS_OFFSET = 100;
+var SHIP_ACTIVATION_ZONE_RADIUS_OFFSET = 50;
+var ASTEROID_ACTIVATION_ZONE_RADIUS_OFFSET = 50;
+
+var SUN_MASS = 5000000;
+var PLANET_MASS = 50000;
+var SHIP_MASS = 1;
+
+function gravity(m1, m2, r) {
+	return (6.6726 * Math.pow(10, -0) * m1 * m2) / (r * r);
+}
 
 function clear(x, y, width, height) {
 	ctx.fillStyle = "black";

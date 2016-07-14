@@ -13,35 +13,42 @@ SPACEX.Turret = function(ship, options) {
 
   this.isActive = false;
   this.isFiring = false;
+  this.isTracking = false;
+  this.fired = false;
+  this.shotTimer = 0;
 
   this.currentTarget = null;
   this.angle = 0;
-
-  this.shotTimer = randInRange(0, this.shotPeriod);
 };
 
 SPACEX.Turret.prototype.setActive = function(active) {
   this.isActive = active;
 };
 
-SPACEX.Turret.prototype.update = function() {
+SPACEX.Turret.prototype.update = function(i) {
   if(this.ship.currentSystem) {
     var closestTarget = null;
     var closestDistance = Infinity;
 
-    for(var i = 0; i < this.ship.currentSystem.childObjects.length; i++) {
-      var obj = this.ship.currentSystem.childObjects[i];
+    for(var i = 0; i < SPACEX.app.childObjects.length; i++) {
+      var obj = SPACEX.app.childObjects[i]; // this.ship.currentSystem.childObjects[i];
 
-      if(obj.type == "planet") {
-        var station = obj.childObjects[0];
+      if(obj.type == "player") {
+          obj = obj.ship;
+      }
 
-        if(station != undefined) {
-          var distance = Geometry.distance(this.ship.x, this.ship.y, station.x, station.y);
+      if(obj.type == "ship") {
+        if(obj != this.ship && obj.currentSystem == this.ship.currentSystem && !obj.isExploding && !obj.isDestroyed) {
+        //var station = obj.childObjects[0];
+
+        //if(station != undefined) {
+          var distance = Geometry.distance(this.ship.x, this.ship.y /*- (i + 1) * 5*/, obj.x, obj.y);
 
           if(distance <= this.range && distance < closestDistance) {
             closestDistance = distance;
-            closestTarget = station;
+            closestTarget = obj;
           }
+        //}
         }
       }
     }
@@ -49,15 +56,10 @@ SPACEX.Turret.prototype.update = function() {
     this.currentTarget = closestTarget;
 
     if(this.currentTarget != null) {
+      var yDiff = this.currentTarget.y - (this.ship.y /*- (i + 1) * 5*/);
+      var xDiff = this.currentTarget.x - this.ship.x;
 
-      var yDiff = this.ship.y - this.currentTarget.y;
-      var xDiff = this.ship.x - this.currentTarget.x;
-
-      var angleToHit = Math.atan(yDiff / xDiff);
-
-      if(this.currentTarget.x < this.ship.x) {
-        angleToHit += Math.PI;
-      }
+      var angleToHit = Math.atan2(yDiff, xDiff);
 
       var angleDelta = this.angle - angleToHit;
 
@@ -84,21 +86,33 @@ SPACEX.Turret.prototype.update = function() {
         this.angle += Math.PI * 2;
       }
 
-      if(this.shotTimer < this.shotDuration) {
-        this.isFiring = true;
+      if(Math.abs(this.angle - angleToHit) <= this.trackingSpeed * this.shotDuration) {
+        this.isTracking = false;
+
+        if(this.shotTimer < this.shotDuration) {
+          this.fired = true;
+          this.isFiring = true;
+        }
+        else {
+          this.isFiring = false;
+        }
       }
       else {
         this.isFiring = false;
+        this.isTracking = true;
+      }
+
+      if(this.fired) {
+        this.shotTimer++;
       }
 
       if(this.shotTimer > this.shotPeriod) {
         this.shotTimer = 0;
+        this.fired = false;
       }
 
-      this.shotTimer++;
-
       if(this.isFiring) {
-        if(Geometry.doesLineIntersectCircle(this.ship.x, this.ship.y + -this.ship.height / 2 + i * 10, Math.cos(this.angle) * this.range, Math.sin(this.angle) * this.range, this.currentTarget.x, this.currentTarget.y, this.currentTarget.r)) {
+        if(Geometry.doesLineIntersectCircle(this.ship.x, this.ship.y /*- (i + 1) * 5*/, Math.cos(this.angle) * this.range, Math.sin(this.angle) * this.range, this.currentTarget.x, this.currentTarget.y, this.currentTarget.r)) {
           this.currentTarget.takeDamage(this.damage);
         }
       }
@@ -117,16 +131,16 @@ SPACEX.Turret.prototype.draw = function(i) {
     ctx.beginPath();
     ctx.strokeStyle = this.shotColor;
     ctx.lineWidth = this.beamWidth;
-    ctx.moveTo(0, -this.ship.height / 2 + (i + 1) * 10);
+    ctx.moveTo(0, -(i + 1) * 5);
 
     ctx.rotate(this.ship.angle);
     ctx.translate(-(this.ship.x), -(this.ship.y));
 
-    if(Geometry.doesLineIntersectCircle(this.ship.x, this.ship.y - this.ship.height / 2 + i * 10, this.ship.x + Math.cos(this.angle) * this.range, this.ship.y + Math.sin(this.angle) * this.range, this.currentTarget.x, this.currentTarget.y, this.currentTarget.r)) {
+    if(Geometry.doesLineIntersectCircle(this.ship.x, this.ship.y - (i + 1) * 5, this.ship.x + Math.cos(this.angle) * this.range, this.ship.y + Math.sin(this.angle) * this.range, this.currentTarget.x, this.currentTarget.y, this.currentTarget.r)) {
       ctx.lineTo(this.currentTarget.x, this.currentTarget.y);
     }
     else {
-      ctx.lineTo(this.ship.x + Math.cos(this.angle) * this.range, this.ship.y + Math.sin(this.angle) * this.range);
+      ctx.lineTo(this.ship.x + Math.cos(this.angle) * this.range, this.ship.y - (i + 1) * 5 + Math.sin(this.angle) * this.range);
     }
 
     ctx.scale(1/SPACEX.app.zoom, 1/SPACEX.app.zoom);

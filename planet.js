@@ -9,7 +9,6 @@ SPACEX.Planet = function(x, y, sun) {
   var r = PLANET_RADIUS; // Math.random() * PLANET_RADIUS / 2 + PLANET_RADIUS / 2;
 
   if(this.planetType == "gas") {
-    //Gas giants are bigger
     r = GAS_GIANT_RADIUS;
   }
 
@@ -32,7 +31,9 @@ SPACEX.Planet = function(x, y, sun) {
     if(hasStation) {
       var position = Geometry.getPositionAtAngle(x, y, r + STATION_ORBIT_DISTANCE, randInRange(0, Math.PI * 2));
 
-      this.addChildObject(new SPACEX.Station(position.x, position.y, x, y, r));
+      this.station = new SPACEX.Station(position.x, position.y, this);
+
+      this.addChildObject(this.station);
     }
   }
 
@@ -43,54 +44,58 @@ SPACEX.Planet = function(x, y, sun) {
   this.img = SPACEX.Assets.getRandomPlanetImage(this.planetType);
 
   this.hover = false;
-  this.selected = false;
 };
 
 SPACEX.Planet.extends(SPACEX.GameObject);
 
+SPACEX.Planet.prototype.update = function() {
+
+};
+
 SPACEX.Planet.prototype.drawImpl = function() {
+  if(SPACEX.app.zoom > MIN_DRAW_SYSTEM_ZOOM) {
+    var zoomAdjust = Math.min(1/SPACEX.app.zoom, 5);
 
-  var zoomAdjust = Math.min(1/SPACEX.app.zoom, 5);
+    //Name
+    ctx.translate(this.x, this.y);
+    ctx.rotate(-SPACEX.player.ship.angle);
+    ctx.scale(zoomAdjust, zoomAdjust);
+    ctx.fillStyle = "green";
+    ctx.font = "20px Arial";
+    ctx.fillText(this.planetType, 0, -(this.r + 20) * 1 / zoomAdjust);
+    ctx.scale(1 / zoomAdjust, 1 / zoomAdjust);
+    ctx.rotate(SPACEX.player.ship.angle);
+    ctx.translate(-(this.x), -(this.y));
 
-  //Name
-  ctx.translate(this.x, this.y);
-  ctx.rotate(-SPACEX.player.ship.angle);
-  ctx.scale(zoomAdjust, zoomAdjust);
-  ctx.fillStyle = "green";
-  ctx.font = "20px Arial";
-  ctx.fillText(this.planetType, 0, -(this.r + 20) * 1 / zoomAdjust);
-  ctx.scale(1 / zoomAdjust, 1 / zoomAdjust);
-  ctx.rotate(SPACEX.player.ship.angle);
-  ctx.translate(-(this.x), -(this.y));
-
-  //Orbit
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(this.sun.x, this.sun.y, this.orbitRadius, 0, Math.PI * 2);
-  ctx.scale(zoomAdjust, zoomAdjust);
-  ctx.stroke();
-  ctx.closePath();
-  ctx.scale(1 / zoomAdjust, 1 / zoomAdjust);
-
-  //Image
-  ctx.translate(this.x - this.r, this.y - this.r);
-  ctx.drawImage(this.img, 0, 0, this.r * 2, this.r * 2);
-  ctx.translate(-(this.x - this.r), -(this.y - this.r));
-
-  if(this.hover || this.selected) {
-    //Ring
-    ctx.strokeStyle = "blue";
-    ctx.lineWidth = 1;
+    //Orbit
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.r + 20, 0, Math.PI * 2);
-    ctx.scale(1/SPACEX.app.zoom, 1/SPACEX.app.zoom);
+    ctx.arc(this.sun.x, this.sun.y, this.orbitRadius, 0, Math.PI * 2);
+    ctx.scale(zoomAdjust, zoomAdjust);
     ctx.stroke();
     ctx.closePath();
-    ctx.scale(SPACEX.app.zoom, SPACEX.app.zoom);
+    ctx.scale(1 / zoomAdjust, 1 / zoomAdjust);
+
+    //Image
+    ctx.translate(this.x - this.r, this.y - this.r);
+    ctx.drawImage(this.img, 0, 0, this.r * 2, this.r * 2);
+    ctx.translate(-(this.x - this.r), -(this.y - this.r));
+
+    if(this.hover || SPACEX.app.selectedObject == this || this.isInActivationRange) {
+      //Ring
+      ctx.strokeStyle = "blue";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r + PLANET_ACTIVATION_ZONE_RADIUS_OFFSET, 0, Math.PI * 2);
+      ctx.scale(1/SPACEX.app.zoom, 1/SPACEX.app.zoom);
+      ctx.stroke();
+      ctx.closePath();
+      ctx.scale(SPACEX.app.zoom, SPACEX.app.zoom);
+    }
   }
 };
 
 SPACEX.Planet.prototype.mouseClickImpl = function(x, y) {
-  SPACEX.selectedBody = this;
+  SPACEX.app.selectedObject = this;
 };

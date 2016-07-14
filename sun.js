@@ -13,20 +13,19 @@ SPACEX.Sun = function(x, y, r) {
   this.img = SPACEX.Assets.getRandomSunImage();
 
   this.hover = false;
-  this.selected = false;
+  // this.selected = false;
 };
 
 SPACEX.Sun.extends(SPACEX.GameObject);
 
 SPACEX.Sun.prototype.drawImpl = function() {
-
   var zoomAdjust = Math.min(1/SPACEX.app.zoom, 5);
 
   ctx.translate(this.x - this.r, this.y - this.r);
   ctx.drawImage(this.img, 0, 0, this.r * 2, this.r * 2);
   ctx.translate(-(this.x - this.r), -(this.y - this.r));
 
-  if(this.hover || this.selected) {
+  if(this.hover || SPACEX.app.selectedObject == this) {
     //Ring
     ctx.strokeStyle = "blue";
     ctx.lineWidth = 1;
@@ -40,5 +39,5 @@ SPACEX.Sun.prototype.drawImpl = function() {
 };
 
 SPACEX.Sun.prototype.mouseClickImpl = function(x, y) {
-  SPACEX.selectedBody = this;
+  SPACEX.app.selectedObject = this;
 };

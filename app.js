@@ -74,33 +74,88 @@ SPACEX.App = function($canvas, screenWidth, screenHeight) {
 		}
 	};
 
-	ctx.canvas.onkeypress = function(e) {
-		self.keyPressed(e);
+	ctx.canvas.onkeydown = function(e) {
+		self.keyDown(e);
 
 		var charCode = e.which;
 
+		debugger;
 		//D
-		if(charCode == 100) {
-			//rotate(-0.05);
-			SPACEX.player.ship.rotate(-1);
+		if(charCode == 68) {
+			SPACEX.player.ship.rotateOn(-1);
 		}
 		//A
-		else if(charCode == 97) {
-			//rotate(0.05);
-			SPACEX.player.ship.rotate(1);
+		else if(charCode == 65) {
+			SPACEX.player.ship.rotateOn(1);
 		}
 		//W
-		else if(charCode == 119) {
-			SPACEX.player.ship.thrust(1);
+		else if(charCode == 87) {
+			SPACEX.player.ship.thrustOn(1);
 		}
 		//S
-		else if(charCode == 115) {
-			SPACEX.player.ship.thrust(-1);
+		else if(charCode == 83) {
+			SPACEX.player.ship.thrustOn(-1);
 		}
 		//Space
 		else if(charCode == 32) {
 			SPACEX.player.ship.stop();
 		}
+	};
+
+	ctx.canvas.onkeyup = function(e) {
+		self.keyUp(e);
+
+		var charCode = e.which;
+
+		//D
+		if(charCode == 68) {
+			SPACEX.player.ship.rotateOff();
+		}
+		//A
+		else if(charCode == 65) {
+			SPACEX.player.ship.rotateOff();
+		}
+		//W
+		else if(charCode == 87) {
+			SPACEX.player.ship.thrustOff();
+		}
+		//S
+		else if(charCode == 83) {
+			SPACEX.player.ship.thrustOff();
+		}
+		//Space
+		else if(charCode == 32) {
+			SPACEX.player.ship.stop();
+		}
+	};
+
+	ctx.canvas.onkeypress = function(e) {
+		self.keyPressed(e);
+
+		// var charCode = e.which;
+		//
+		// //D
+		// if(charCode == 100) {
+		// 	//rotate(-0.05);
+		// 	SPACEX.player.ship.rotate(-1);
+		// }
+		// //A
+		// else if(charCode == 97) {
+		// 	//rotate(0.05);
+		// 	SPACEX.player.ship.rotate(1);
+		// }
+		// //W
+		// else if(charCode == 119) {
+		// 	SPACEX.player.ship.thrust(1);
+		// }
+		// //S
+		// else if(charCode == 115) {
+		// 	SPACEX.player.ship.thrust(-1);
+		// }
+		// //Space
+		// else if(charCode == 32) {
+		// 	SPACEX.player.ship.stop();
+		// }
 	};
 
 	SPACEX.app = this;
@@ -137,8 +192,8 @@ SPACEX.App.prototype.init = function() {
 	    [10, 10000, 10, 10, 10, 10, 10, 10, 10, 10]
 	  );
 
-		var x = randInRange(-2000, 2000);
-		var y = randInRange(-2000, 2000);
+		var x = randInRange(-5000, 5000);
+		var y = randInRange(-5000, 5000);
 
 		var ship = SPACEX.ShipHelper.getRandomShip(type);
 		ship.x = x;
@@ -167,7 +222,12 @@ SPACEX.App.prototype.start = function() {
 		requestAnimationFrame(mainLoop);
 	};
 
-	mainLoop();
+	ctx.drawImage(this.img, 0, 0);
+	ctx.fillStyle = "blue";
+	ctx.font = "36px Arial";
+	ctx.fillText("SPACEX", this.width / 2 - 100, this.height / 2);
+
+	setTimeout(mainLoop, 1000);
 };
 
 SPACEX.App.prototype.update = function() {

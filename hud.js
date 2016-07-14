@@ -47,6 +47,43 @@ SPACEX.Hud.prototype.drawImpl = function() {
   ctx.fillStyle = "white";
   ctx.font = "8px Arial";
   ctx.fillText(Math.floor(SPACEX.player.ship.fuel) + " / " + SPACEX.player.ship.maxFuel, 172, 18);
+
+  if(SPACEX.player.currentSystem) {
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText("System: " + SPACEX.player.currentSystem.name, 300, 10);
+  }
+
+  if(SPACEX.player.currentPlanet) {
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText("Planet: " + SPACEX.player.currentPlanet.name, 300, 30);
+  }
+
+  if(SPACEX.player.currentStation) {
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText("Station: " + SPACEX.player.currentStation.name, 300, 50);
+  }
+
+  for(var i = 0; i < SPACEX.player.ship.turrets.length; i++) {
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText("Laser Turret", 500 + i * 100, 10);
+
+    if(SPACEX.player.ship.turrets[i].currentTarget) {
+      ctx.fillText("Target: " + SPACEX.player.ship.turrets[i].currentTarget.name, 500 + i * 100, 30);
+    }
+
+    if(SPACEX.player.ship.turrets[i].isFiring) {
+      ctx.fillStyle = "red";
+      ctx.fillText("Firing", 500 + i * 100, 50);
+    }
+    else if(SPACEX.player.ship.turrets[i].isTracking) {
+      ctx.fillStyle = "blue";
+      ctx.fillText("Tracking", 500 + i * 100, 50);
+    }
+  }
 };
 
 SPACEX.Hud.prototype.mouseClickImpl = function() {

@@ -1,6 +1,6 @@
 SPACEX = SPACEX || {};
 
-SPACEX.Station = function(x, y, planetX, planetY, planetRadius) {
+SPACEX.Station = function(x, y, planet) {
 
   var r = STATION_RADIUS;
 
@@ -13,14 +13,13 @@ SPACEX.Station = function(x, y, planetX, planetY, planetRadius) {
     r: r
   });
 
-  this.planetX = planetX;
-  this.planetY = planetY;
+  this.planet = planet;
   this.name = makeid();
-  this.orbitRadius = Math.sqrt(Math.pow(planetX - x, 2) + Math.pow(planetY - y, 2));
-  this.img = SPACEX.Assets.getRandomStationImage(this.planetType);
+  this.orbitRadius = Math.sqrt(Math.pow(planet.x - x, 2) + Math.pow(planet.y - y, 2));
+  this.img = SPACEX.Assets.getRandomStationImage();
 
   this.hover = false;
-  this.selected = false;
+  // this.selected = false;
 };
 
 SPACEX.Station.extends(SPACEX.GameObject);
@@ -41,25 +40,25 @@ SPACEX.Station.prototype.drawImpl = function() {
   ctx.translate(-(this.x), -(this.y));
 
   //Orbit
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(this.planetX, this.planetY, this.orbitRadius, 0, Math.PI * 2);
-    ctx.scale(zoomAdjust, zoomAdjust);
-    ctx.stroke();
-    ctx.scale(1 / zoomAdjust, 1 / zoomAdjust);
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(this.planet.x, this.planet.y, this.orbitRadius, 0, Math.PI * 2);
+  ctx.scale(zoomAdjust, zoomAdjust);
+  ctx.stroke();
+  ctx.scale(1 / zoomAdjust, 1 / zoomAdjust);
 
   //Image
   ctx.translate(this.x - this.r, this.y - this.r);
   ctx.drawImage(this.img, 0, 0, this.r * 2, this.r * 2);
   ctx.translate(-(this.x - this.r), -(this.y - this.r));
 
-  if(this.hover || this.selected) {
+  if(this.hover || SPACEX.app.selectedObject == this || this.isInActivationRange) {
     //Ring
     ctx.strokeStyle = "blue";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.r + 20, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, this.r + STATION_ACTIVATION_ZONE_RADIUS_OFFSET, 0, Math.PI * 2);
     ctx.scale(1/SPACEX.app.zoom, 1/SPACEX.app.zoom);
     ctx.stroke();
     ctx.closePath();
@@ -68,7 +67,7 @@ SPACEX.Station.prototype.drawImpl = function() {
 };
 
 SPACEX.Station.prototype.mouseClickImpl = function(x, y) {
-  SPACEX.selectedBody = this;
+  SPACEX.app.selectedObject = this;
 };
 
 SPACEX.Station.prototype.takeDamage = function(damage) {

@@ -141,48 +141,12 @@ Geometry.isCollision = function(gameObject, p) {
 	return distance <= gameObject.r;
 };
 
-//http://stackoverflow.com/questions/17136084/checking-if-a-point-is-inside-a-rotated-rectangle
-// Geometry.isCollision = function(rect, p) {
-// 	var rectWidth = Geometry.distance(
-// 		rect.p1.x, rect.p1.y,
-// 		rect.p2.x, rect.p2.y
-// 	);
-//
-// 	var rectHeight = Geometry.distance(
-// 		rect.p2.x, rect.p2.y,
-// 		rect.p3.x, rect.p3.y
-// 	);
-//
-// 	var rectArea = rectWidth * rectHeight;
-//
-// 	//Not a collision if sum of a1, a2, a3 > rectangle area
-//
-// 	//p1, p, p4
-// 	var a1 = Geometry.triangleArea(rect.p1, p, rect.p4);
-//
-// 	//p4, p, p3
-// 	var a2 = Geometry.triangleArea(rect.p4, p, rect.p3);
-//
-// 	//p3, p, p2
-// 	var a3 = Geometry.triangleArea(rect.p4, p, rect.p3);
-//
-// 	//p, p2, p1
-// 	var a4 = Geometry.triangleArea(p, rect.p2, rect.p1);
-//
-// 	return a1 + a2 + a3 <= rectArea;
-// };
+Geometry.isInActivationZone = function(gameObject, p, activationZoneRadiusOffset) {
+	var distance = Geometry.distance(gameObject.x, gameObject.y, p.x, p.y);
+
+	return distance <= gameObject.r + activationZoneRadiusOffset;
+};
 
 Geometry.isRectCollision = function(rect1, rect2) {
 	return doPolygonsIntersect([rect1.p1, rect1.p2, rect1.p3, rect1.p4], [rect2.p1, rect2.p2, rect2.p3, rect2.p4]);
 };
-
-//
-// Geometry.isCollision = function(rectMinX, rectMinY, rectMaxX, rectMaxY, xMin, yMin, xMax, yMax) {
-// 	xMax = xMax || xMin;
-// 	yMax = yMax || yMin;
-//
-// 	return xMax >= rectMinX &&
-// 		   xMin <= rectMaxX &&
-// 		   yMax >= rectMinY &&
-// 		   yMin <= rectMaxY;
-// };
