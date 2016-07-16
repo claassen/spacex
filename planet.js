@@ -1,12 +1,14 @@
 SPACEX = SPACEX || {};
 
+var test = false;
+
 SPACEX.Planet = function(x, y, sun) {
   this.planetType = selectValueWithProbability(
     ["habitable", "uninhabitable", "gas"],
     [PERCENT_HABITABLE_PLANETS, PERCENT_UNINHABITABLE_PLANETS, PERCENT_GAS_PLANETS]
   );
 
-  var r = PLANET_RADIUS; // Math.random() * PLANET_RADIUS / 2 + PLANET_RADIUS / 2;
+  var r = PLANET_RADIUS;
 
   if(this.planetType == "gas") {
     r = GAS_GIANT_RADIUS;
@@ -34,6 +36,45 @@ SPACEX.Planet = function(x, y, sun) {
       this.station = new SPACEX.Station(position.x, position.y, this);
 
       this.addChildObject(this.station);
+    }
+
+    var hasShips = false;
+
+    test = true;
+    // var hasShips = selectValueWithProbability(
+    //   [true, false],
+    //   [100, 0]
+    // );
+
+
+    if(hasShips) {
+      var type = selectValueWithProbability(
+  	    ["advanced", "advanced2", "explorer", "hostile", "industrial", "industrial2", "industrial3", "junky", "purple_alien", "unique_alien"],
+  	    [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+  	  );
+
+      var faction = selectValueWithProbability(
+        [type, "friendly"],
+        [50, 50]
+      );
+
+      for(var i = 0; i < randInRange(1, 10); i++) {
+        var r = randInRange(this.r + 20,  this.r + 100);
+        var position = Geometry.getPositionAtAngle(this.x, this.y, r, randInRange(0, Math.PI * 2));
+
+    		var ship = SPACEX.ShipHelper.getRandomShip(type, type);
+    		ship.x = position.x;
+    		ship.y = position.y;
+
+        var v = Math.sqrt((G * PLANET_MASS) / r);
+
+        var theta = Math.atan2(this.y - ship.y, this.x - ship.x);
+
+        ship.vx = v * Math.cos(theta);
+    		ship.vy = v * Math.sin(theta);
+
+        SPACEX.app.addChildObject(ship);
+      }
     }
   }
 

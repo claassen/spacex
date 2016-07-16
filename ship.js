@@ -10,8 +10,10 @@ SPACEX.Ship = function(size, image, options) {
     height: size
   });
 
+  this.faction = options.faction;
+
   this.turningSpeed = 0.02;
-  this.acceleration = 5.2;
+  this.acceleration = 0.5;
   this.stopping = false;
 
   this.maxShield = 1000;
@@ -35,7 +37,7 @@ SPACEX.Ship = function(size, image, options) {
     range: 1000,
     shotColor: "blue",
     beamWidth: 1,
-    shotDuration: 20,
+    shotDuration: 5,
     shotPeriod: 40,
     trackingSpeed: 0.1,
     damage: 1
@@ -45,7 +47,7 @@ SPACEX.Ship = function(size, image, options) {
     range: 10000,
     shotColor: "red",
     beamWidth: 3,
-    shotDuration: 20,
+    shotDuration: 10,
     shotPeriod: 100,
     trackingSpeed: 0.008,
     damage: 5
@@ -59,20 +61,25 @@ SPACEX.Ship = function(size, image, options) {
   this.vx = 0;
   this.vy = 0;
   this.vr = 0;
+
+  this.currentOrbitTarget = null;
+  this.isManualThrusting = false;
 };
 
 SPACEX.Ship.extends(SPACEX.GameObject);
 
-SPACEX.Ship.prototype.thrustOn = function(delta) {
+SPACEX.Ship.prototype.thrustOn = function(delta, shift) {
   if(this.fuel > 0) {
-    this.ax = Math.sin(this.angle) * delta;
-    this.ay = Math.cos(this.angle) * delta;
+    this.ax = this.acceleration * Math.sin(this.angle) * delta * (shift ? 0.1 : 1);
+    this.ay = this.acceleration * Math.cos(this.angle) * delta * (shift ? 0.1 : 1);
+    this.isManualThrusting = true;
   }
 };
 
 SPACEX.Ship.prototype.thrustOff = function() {
   this.ax = 0;
   this.ay = 0;
+  this.isManualThrusting = false;
 }
 
 SPACEX.Ship.prototype.rotateOn = function(delta) {
@@ -89,14 +96,11 @@ SPACEX.Ship.prototype.stop = function() {
   this.stopping = true;
 }
 
-SPACEX.Ship.prototype.update = function() {
-  this.currentSystem = undefined;
-
-  for(var i = 0; i < SPACEX.systems.length; i++) {
-    if(Geometry.isCollision(SPACEX.systems[i], { x: this.x, y: this.y })) {
-      this.currentSystem = SPACEX.systems[i];
-    }
-  }
+SPACEX.Ship.prototype.getCurrentAcceleration = function() {
+  var acceleration = {
+    x: this.ax,
+    y: this.ay
+  };
 
   if(this.currentSystem) {
     var sun = this.currentSystem.sun;
@@ -108,11 +112,11 @@ SPACEX.Ship.prototype.update = function() {
     var fx = Math.cos(theta) * f;
     var fy = Math.sin(theta) * f;
 
-    var dx1 = fx / SHIP_MASS;
-    var dy1 = fy / SHIP_MASS;
+    var ax = fx / SHIP_MASS;
+    var ay = fy / SHIP_MASS;
 
-    this.vx += dx1;
-    this.vy += dy1;
+    acceleration.x += ax;
+    acceleration.y += ay;
 
     for(var j = 0; j < this.currentSystem.planets.length; j++) {
       var planet = this.currentSystem.planets[j];
@@ -124,27 +128,67 @@ SPACEX.Ship.prototype.update = function() {
       var fx = Math.cos(theta) * f;
   		var fy = Math.sin(theta) * f;
 
-      var dx1 = fx / SHIP_MASS;
-  		var dy1 = fy / SHIP_MASS;
+      var ax = fx / SHIP_MASS;
+  		var ay = fy / SHIP_MASS;
 
-      this.vx += dx1;
-  		this.vy += dy1;
+      acceleration.x += ax;
+  		acceleration.y += ay;
     }
   }
 
+  return acceleration;
+};
+
+SPACEX.Ship.prototype.update = function() {
+  if(this.currentOrbitTarget && !this.isManualThrusting) {
+    var r = Geometry.distance(this.x, this.y, this.currentOrbitTarget.x, this.currentOrbitTarget.y);
+
+    var v = Math.sqrt(G * (PLANET_MASS + SHIP_MASS) / r);
+
+    var theta = Math.asin(Math.abs(this.x - this.currentOrbitTarget.x) / r);
+
+    var targetVx = v * Math.cos(theta);
+    var targetVy = v * Math.sin(theta);
+
+    if(this.x < this.currentOrbitTarget.x && this.y < this.currentOrbitTarget.y) {targetVx *= -1;}
+  	if(this.x > this.currentOrbitTarget.x && this.y < this.currentOrbitTarget.y) {targetVx *= -1; targetVy *= -1}
+  	if(this.x > this.currentOrbitTarget.x && this.y > this.currentOrbitTarget.y) {targetVy *= -1;}
+
+    this.ax = -(this.vx - targetVx) > 0 ? Math.min(-(this.vx - targetVx), this.acceleration) : Math.max(-(this.vx - targetVx), -this.acceleration);
+    this.ay = -(this.vy - targetVy) > 0 ? Math.min(-(this.vy - targetVy), this.acceleration) : Math.max(-(this.vy - targetVy), -this.acceleration);
+  }
+
+  this.currentSystem = undefined;
+
+  for(var i = 0; i < SPACEX.systems.length; i++) {
+    if(Geometry.isCollision(SPACEX.systems[i], { x: this.x, y: this.y })) {
+      this.currentSystem = SPACEX.systems[i];
+    }
+  }
+
+
+
   this.angle += this.vr;
 
-  this.vx += this.ax;
-  this.vy += this.ay;
+
+
+  //'Velocity verlet'
+  var acceleration = this.getCurrentAcceleration();
 
   if(this == SPACEX.player.ship) {
-    this.x += this.vx;
-    this.y += this.vy;
+    this.x += this.vx + acceleration.x / 2;
+    this.y += this.vy + acceleration.y / 2;
   }
   else {
-    this.x -= this.vx;
-    this.y -= this.vy;
+    this.x -= this.vx + acceleration.x / 2;
+    this.y -= this.vy + acceleration.y / 2;
   }
+
+  var newAcceleration = this.getCurrentAcceleration();
+
+  this.vx += (acceleration.x + newAcceleration.x) / 2;
+  this.vy += (acceleration.y + newAcceleration.y) / 2;
+
 
   if(!this.isExploding && !this.isDestroyed) {
     //Update turrets

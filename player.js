@@ -14,17 +14,24 @@ SPACEX.Player = function() {
     x: 0,
     y: 0,
     width: this.ship.width,
-    height: this.ship.height
+    height: this.ship.height,
+    faction: "friendly"
   });
 
   this.addChildObject(this.ship);
 
   var homePlanet = SPACEX.systems[0].planets[0];
 
-  var tx = homePlanet.x - homePlanet.r - 100;
-  var ty = homePlanet.y - homePlanet.r - 100;
+  var r = randInRange(homePlanet.r + 200, homePlanet.r + 500);
 
-  SPACEX.app.translate(-tx, -ty);
+  var position = Geometry.getPositionAtAngle(homePlanet.x, homePlanet.y, r, randInRange(0, Math.PI * 2));
+
+  SPACEX.app.translate(-position.x, -position.y);
+
+  position.x = 0;
+  position.y = 0;
+
+  this.ship.currentOrbitTarget = homePlanet;
 };
 
 SPACEX.Player.extends(SPACEX.GameObject);
@@ -33,12 +40,20 @@ var predictedPathPositionsCache = [];
 var previousPredictedPathZoom = null;
 var predictedCacheRefeshTimer = 0;
 
+SPACEX.Player.prototype.getAccelerationDueToGravity = function() {
+
+};
+
 SPACEX.Player.prototype.drawImpl = function() {
   //Projected path
+
+  //Save current ship values
   var x = this.ship.x;
   var y = this.ship.x;
   var vx = this.ship.vx;
   var vy = this.ship.vy;
+  var ax = this.ship.ax;
+  var ay = this.ship.ay;
 
   ctx.strokeStyle = "green";
   ctx.lineWidth = 1;
@@ -53,6 +68,7 @@ SPACEX.Player.prototype.drawImpl = function() {
     predictedPathPositionsCache = [];
 
     for(var i = 0; i < Math.min(50000 / (SPACEX.app.zoom * 50), 20000); i++) {
+
       //Periodically check if the path went into another system
       if(i % 100 == 0) {
         for(var s = 0; s < SPACEX.systems.length; s++) {
@@ -62,46 +78,31 @@ SPACEX.Player.prototype.drawImpl = function() {
         }
       }
 
-      if(system) {
-        var sun = system.sun;
+      this.ship.ax = 0;
+      this.ship.ay = 0;
 
-        var d = Math.max(Geometry.distance(x, y, sun.x, sun.y), sun.r);
-        var f = gravity(SHIP_MASS, SUN_MASS, d);
+      //'Velocity verlet'
+      var acceleration = this.ship.getCurrentAcceleration();
 
-        var theta = Math.atan2(y - sun.y, x - sun.x);
-        var fx = Math.cos(theta) * f;
-        var fy = Math.sin(theta) * f;
+      this.ship.x -= this.ship.vx + acceleration.x / 2;
+      this.ship.y -= this.ship.vy + acceleration.y / 2;
 
-        var dx1 = fx / SHIP_MASS;
-        var dy1 = fy / SHIP_MASS;
+      var newAcceleration = this.ship.getCurrentAcceleration();
 
-        vx += dx1;
-        vy += dy1;
+      this.ship.vx += (acceleration.x + newAcceleration.x) / 2;
+      this.ship.vy += (acceleration.y + newAcceleration.y) / 2;
 
-        for(var j = 0; j < system.planets.length; j++) {
-          var planet = system.planets[j];
-
-          var d = Math.max(Geometry.distance(x, y, planet.x, planet.y), planet.r);
-          var f = gravity(SHIP_MASS, PLANET_MASS, d);
-
-          var theta = Math.atan2(y - planet.y, x - planet.x);
-          var fx = Math.cos(theta) * f;
-      		var fy = Math.sin(theta) * f;
-
-          var dx1 = fx / SHIP_MASS;
-      		var dy1 = fy / SHIP_MASS;
-
-          vx += dx1;
-      		vy += dy1;
-        }
-      }
-
-      x -= vx;
-      y -= vy;
-
-      predictedPathPositionsCache.push({x: x, y: y});
+      predictedPathPositionsCache.push({x: this.ship.x, y: this.ship.y});
     }
   }
+
+  //Restore saved values
+  this.ship.x = x;
+  this.ship.y = y;
+  this.ship.vx = vx;
+  this.ship.vy = vy;
+  this.ship.ax = ax;
+  this.ship.ay = ay;
 
   if(predictedCacheRefeshTimer > 100) {
     predictedCacheRefeshTimer = 0;

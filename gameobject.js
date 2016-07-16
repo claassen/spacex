@@ -107,7 +107,7 @@ SPACEX.GameObject.prototype.mouseScroll = function(e) {
 SPACEX.GameObject.prototype.keyPressed = function(e) {
 };
 
-SPACEX.GameObject.prototype.keyDown = function(e) {
+SPACEX.GameObject.prototype.keyDown = function(e, shift) {
 };
 
 SPACEX.GameObject.prototype.keyUp = function(e) {

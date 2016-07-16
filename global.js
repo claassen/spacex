@@ -71,8 +71,10 @@ var SUN_MASS = 5000000;
 var PLANET_MASS = 50000;
 var SHIP_MASS = 1;
 
+var G = 6.6726 * Math.pow(10, -1);
+
 function gravity(m1, m2, r) {
-	return (6.6726 * Math.pow(10, -0) * m1 * m2) / (r * r);
+	return (G * m1 * m2) / (r * r);
 }
 
 function clear(x, y, width, height) {

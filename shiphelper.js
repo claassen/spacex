@@ -2,7 +2,7 @@ SPACEX = SPACEX || {};
 
 SPACEX.ShipHelper = {};
 
-SPACEX.ShipHelper.getRandomShip = function(type) {
+SPACEX.ShipHelper.getRandomShip = function(type, faction) {
   var sizeMap = {
     "small": SMALL_SHIP_RADIUS,
     "medium": MEDIUM_SHIP_RADIUS,
@@ -10,7 +10,7 @@ SPACEX.ShipHelper.getRandomShip = function(type) {
   };
 
   var createShip = function(size, image) {
-    return new SPACEX.Ship(sizeMap[size], image);
+    return new SPACEX.Ship(sizeMap[size], image, { faction: faction });
   };
 
   var getShipImage = function(size, num) {

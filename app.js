@@ -79,7 +79,6 @@ SPACEX.App = function($canvas, screenWidth, screenHeight) {
 
 		var charCode = e.which;
 
-		debugger;
 		//D
 		if(charCode == 68) {
 			SPACEX.player.ship.rotateOn(-1);
@@ -90,15 +89,15 @@ SPACEX.App = function($canvas, screenWidth, screenHeight) {
 		}
 		//W
 		else if(charCode == 87) {
-			SPACEX.player.ship.thrustOn(1);
+			SPACEX.player.ship.thrustOn(1, e.shiftKey);
 		}
 		//S
 		else if(charCode == 83) {
-			SPACEX.player.ship.thrustOn(-1);
+			SPACEX.player.ship.thrustOn(-1, e.shiftKey);
 		}
 		//Space
 		else if(charCode == 32) {
-			SPACEX.player.ship.stop();
+
 		}
 	};
 
@@ -131,31 +130,6 @@ SPACEX.App = function($canvas, screenWidth, screenHeight) {
 
 	ctx.canvas.onkeypress = function(e) {
 		self.keyPressed(e);
-
-		// var charCode = e.which;
-		//
-		// //D
-		// if(charCode == 100) {
-		// 	//rotate(-0.05);
-		// 	SPACEX.player.ship.rotate(-1);
-		// }
-		// //A
-		// else if(charCode == 97) {
-		// 	//rotate(0.05);
-		// 	SPACEX.player.ship.rotate(1);
-		// }
-		// //W
-		// else if(charCode == 119) {
-		// 	SPACEX.player.ship.thrust(1);
-		// }
-		// //S
-		// else if(charCode == 115) {
-		// 	SPACEX.player.ship.thrust(-1);
-		// }
-		// //Space
-		// else if(charCode == 32) {
-		// 	SPACEX.player.ship.stop();
-		// }
 	};
 
 	SPACEX.app = this;
@@ -167,16 +141,33 @@ SPACEX.systems = [];
 SPACEX.map = {};
 
 SPACEX.App.prototype.init = function() {
+	var systems = [];
+
 	for(var i = 0; i < NUM_SYSTEMS / 4; i++) {
-		SPACEX.systems.push(new SPACEX.System("top"));
-		SPACEX.systems.push(new SPACEX.System("bottom"));
-		SPACEX.systems.push(new SPACEX.System("left"));
-		SPACEX.systems.push(new SPACEX.System("right"));
+		systems.push(new SPACEX.System("top"));
+		systems.push(new SPACEX.System("bottom"));
+		systems.push(new SPACEX.System("left"));
+		systems.push(new SPACEX.System("right"));
 	}
 
-	for(var i = 0; i < SPACEX.systems.length; i++) {
-			this.addChildObject(SPACEX.systems[i]);
+	var discardedCount = 0;
+
+	for(var i = 0; i < systems.length; i++) {
+		var keepSystem = true;
+		for(var j = i + 1; j < systems.length; j++) {
+			if(Geometry.isInActivationZone(systems[i], {x: systems[j].x, y: systems[j].y}, SYSTEM_RADIUS)) {
+				keepSystem = false;
+				discardedCount++;
+				break;
+			}
+		}
+		if(keepSystem) {
+			SPACEX.systems.push(systems[i]);
+			this.addChildObject(systems[i]);
+		}
 	}
+
+	console.log("Discarded " + discardedCount + " systems due to overlap.");
 
 	SPACEX.player = new SPACEX.Player();
 
@@ -186,21 +177,21 @@ SPACEX.App.prototype.init = function() {
 
 	this.addChildObject(SPACEX.hud);
 
-	for(var i = 0; i < 50; i++) {
-		var type = selectValueWithProbability(
-	    ["advanced", "advanced2", "explorer", "hostile", "industrial", "industrial2", "industrial3", "junky", "purple_alien", "unique_alien"],
-	    [10, 10000, 10, 10, 10, 10, 10, 10, 10, 10]
-	  );
-
-		var x = randInRange(-5000, 5000);
-		var y = randInRange(-5000, 5000);
-
-		var ship = SPACEX.ShipHelper.getRandomShip(type);
-		ship.x = x;
-		ship.y = y;
-
-		this.addChildObject(ship);
-	}
+	// for(var i = 0; i < 50; i++) {
+	// 	var type = selectValueWithProbability(
+	//     ["advanced", "advanced2", "explorer", "hostile", "industrial", "industrial2", "industrial3", "junky", "purple_alien", "unique_alien"],
+	//     [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+	//   );
+	//
+	// 	var x = randInRange(-5000, 5000);
+	// 	var y = randInRange(-5000, 5000);
+	//
+	// 	var ship = SPACEX.ShipHelper.getRandomShip(type, type);
+	// 	ship.x = x;
+	// 	ship.y = y;
+	//
+	// 	this.addChildObject(ship);
+	// }
 };
 
 SPACEX.App.prototype.start = function() {

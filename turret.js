@@ -4,7 +4,7 @@ SPACEX.Turret = function(ship, options) {
   this.ship = ship;
 
   this.trackingSpeed = options.trackingSpeed;
-  this.shotColor = options.shotColor; //'#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6);
+  this.shotColor = options.shotColor;
   this.beamWidth = options.beamWidth;
   this.shotDuration = options.shotDuration;
   this.shotPeriod = options.shotPeriod;
@@ -31,24 +31,21 @@ SPACEX.Turret.prototype.update = function(i) {
     var closestDistance = Infinity;
 
     for(var i = 0; i < SPACEX.app.childObjects.length; i++) {
-      var obj = SPACEX.app.childObjects[i]; // this.ship.currentSystem.childObjects[i];
+      var obj = SPACEX.app.childObjects[i];
 
       if(obj.type == "player") {
           obj = obj.ship;
       }
 
       if(obj.type == "ship") {
-        if(obj != this.ship && obj.currentSystem == this.ship.currentSystem && !obj.isExploding && !obj.isDestroyed) {
-        //var station = obj.childObjects[0];
+        if(obj != this.ship && obj.currentSystem == this.ship.currentSystem && !obj.isExploding && !obj.isDestroyed && obj.faction != this.ship.faction) {
 
-        //if(station != undefined) {
-          var distance = Geometry.distance(this.ship.x, this.ship.y /*- (i + 1) * 5*/, obj.x, obj.y);
+          var distance = Geometry.distance(this.ship.x, this.ship.y, obj.x, obj.y);
 
           if(distance <= this.range && distance < closestDistance) {
             closestDistance = distance;
             closestTarget = obj;
           }
-        //}
         }
       }
     }
